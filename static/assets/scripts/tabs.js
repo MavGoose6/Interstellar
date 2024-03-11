@@ -2,11 +2,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
   const addTabButton = document.getElementById('add-tab')
   const tabList = document.getElementById('tab-list')
   const iframeContainer = document.getElementById('iframe-container')
-  const rightSideNav = document.getElementById('right-side-nav')
-  const toggleNavButton = document.getElementById('toggle-nav')
 
   let tabCounter = 1
-  let navOpen = true
 
   addTabButton.addEventListener('click', () => {
     const newTab = document.createElement('li')
@@ -79,32 +76,43 @@ document.addEventListener('DOMContentLoaded', function (event) {
   })
 
   window.addEventListener('message', function (event) {
+    if (event.origin !== window.location.origin) {
+      console.warn('Received message from unexpected origin:', event.origin)
+      return
+    }
+
     console.log('Received message:', event.data)
+
     if (event.data && event.data.url) {
       const iframes = Array.from(iframeContainer.querySelectorAll('iframe'))
-      const activeIframe = iframes.find((iframe) => iframe.classList.contains('active'))
-
-      if (activeIframe) {
-        console.log('Visible iframe:', activeIframe)
-        const tabToUpdate = tabList.querySelector(`[data-tab-id='${activeIframe.dataset.tabId}']`)
-        if (tabToUpdate) {
-          console.log('Tab to update:', tabToUpdate)
-          const tabTitle = tabToUpdate.querySelector('.tab-title')
-          if (tabTitle) {
-            console.log('Tab title:', tabTitle)
-            tabTitle.textContent = event.data.url
-            console.log('Hostname:', event.data.url)
-          } else {
-            console.log('No tab title element found.')
-          }
-        } else {
-          console.log('No tab to update found.')
-        }
-      } else {
-        console.log('No visible iframe found.')
-      }
     } else {
       console.log('No URL data in the message.')
+    }
+
+    const activeIframe = iframes.find((iframe) => iframe.classList.contains('active'))
+
+    if (activeIframe) {
+      console.log('Visible iframe:', activeIframe)
+
+      const tabToUpdate = tabList.querySelector(`[data-tab-id='${activeIframe.dataset.tabId}']`)
+
+      if (tabToUpdate) {
+        console.log('Tab to update:', tabToUpdate)
+
+        const tabTitle = tabToUpdate.querySelector('.tab-title')
+
+        if (tabTitle) {
+          console.log('Tab title:', tabTitle)
+          tabTitle.textContent = event.data.url
+          console.log('Hostname:', event.data.url)
+        } else {
+          console.log('No tab title element found.')
+        }
+      } else {
+        console.log('No tab to update found.')
+      }
+    } else {
+      console.log('No visible iframe found.')
     }
   })
 
@@ -131,16 +139,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
     }
   }
 
-  toggleNavButton.addEventListener('click', () => {
-    navOpen = !navOpen
-    toggleNavButton.classList.toggle('open')
-    if (navOpen) {
-      rightSideNav.style.transform = 'translateX(0)'
-    } else {
-      rightSideNav.style.transform = 'translateX(-100%)'
-    }
-  })
-
   let dragTab = null
 
   tabList.addEventListener('dragstart', (event) => {
@@ -163,25 +161,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
 
   tabList.addEventListener('dragend', () => {
     dragTab = null
-  })
-
-  const container = document.querySelector('.container')
-
-  toggleNavButton.addEventListener('click', () => {
-    navOpen = !navOpen
-    toggleNavButton.classList.toggle('open')
-    container.classList.toggle('nav-closed')
-    if (navOpen) {
-      rightSideNav.style.transform = 'translateX(0)'
-    } else {
-      rightSideNav.style.transform = 'translateX(-100%)'
-    }
-  })
-
-  toggleNavButton.addEventListener('click', () => {
-    navOpen = !navOpen
-    toggleNavButton.classList.toggle('open')
-    container.classList.toggle('nav-closed')
   })
 })
 
@@ -217,21 +196,21 @@ function erudaToggle() {
   const iframes = Array.from(iframeContainer.querySelectorAll('iframe'))
   const activeIframe = iframes.find((iframe) => iframe.classList.contains('active'))
 
-  const proccyWindow = activeIframe.contentWindow
-  const proccyDocument = activeIframe.contentDocument
+  const erudaWindow = activeIframe.contentWindow
+  const erudaDocument = activeIframe.contentDocument
 
-  if (!proccyWindow || !proccyDocument) return
+  if (!erudaWindow || !erudaDocument) return
 
-  if (proccyWindow.eruda?._isInit) {
-    proccyWindow.eruda.destroy()
+  if (erudaWindow.eruda?._isInit) {
+    erudaWindow.eruda.destroy()
   } else {
-    let script = proccyDocument.createElement('script')
+    let script = erudaDocument.createElement('script')
     script.src = 'https://cdn.jsdelivr.net/npm/eruda'
     script.onload = function () {
-      if (!proccyWindow) return
-      proccyWindow.eruda.init()
-      proccyWindow.eruda.show()
+      if (!erudaWindow) return
+      erudaWindow.eruda.init()
+      erudaWindow.eruda.show()
     }
-    proccyWindow.document?.head?.appendChild(script) || proccyDocument.head.appendChild(script)
+    erudaWindow.document?.head?.appendChild(script) || erudaDocument.head.appendChild(script)
   }
 }
